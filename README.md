@@ -11,15 +11,7 @@ Generate **Material Design 3** (Material You) color tokens, tonal palettes, and 
 ## Installation
 
 ```bash
-npm install @sandlada/mcu-helper
-```
-
-```bash
-yarn add @sandlada/mcu-helper
-```
-
-```bash
-pnpm add @sandlada/mcu-helper
+npm install @sandlada/mcu-helper @material/material-color-utilities
 ```
 
 > `@material/material-color-utilities` is a **peer dependency** — make sure it's installed in your project.
@@ -29,20 +21,20 @@ pnpm add @sandlada/mcu-helper
 ## Quick Start
 
 ```ts
-import { Hct } from "@material/material-color-utilities"
-import { MaterialColor, Serialization } from "@sandlada/mcu-helper"
+import { createTheme, toCSS } from "@sandlada/mcu-helper"
 
-// 1. Pick a source color (in HCT color space)
-const sourceColor = Hct.fromInt(0xff6750a4) // Seed color
+// 1. Generate light & dark theme colors (functional curried API)
+const theme = createTheme({
+  variant: 2, // TonalSpot
+  specVersion: "2025",
+  oled: false,
+})("#6750A4")
 
-// 2. Generate light & dark theme colors
-const theme = MaterialColor.Create({ sourceColor })
-
-// 3. Serialize to CSS custom properties
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-})
+// 2. Serialize to CSS custom properties
+const css = toCSS({
+  format: "hex",
+  varPrefix: "md-sys-color",
+})(theme)
 
 console.log(css)
 ```
@@ -51,294 +43,118 @@ Output:
 
 ```css
 :root {
-    --md-sys-color-background: light-dark(#f8fdff, #101416);
+    --md-sys-color-background: light-dark(#fdf7ff, #141218);
     --md-sys-color-error: light-dark(#ba1a1a, #ffb4ab);
     --md-sys-color-error-container: light-dark(#ffdad6, #93000a);
-    --md-sys-color-inverse-on-surface: light-dark(#f0f1f1, #111415);
-    /* ... more tokens */
+    --md-sys-color-error-dim: light-dark(#4e0002, #ffb4ab);
     --md-sys-color-primary: light-dark(#6750a4, #d0bcff);
-    --md-sys-color-surface-container-lowest: light-dark(#ffffff, #080b0c);
-    --md-sys-color-on-surface: light-dark(#191c1d, #e0e3e3);
+    --md-sys-color-primary-container: light-dark(#eaddff, #4f378b);
+    --md-sys-color-primary-dim: light-dark(#4f378b, #d0bcff);
+    --md-sys-color-surface: light-dark(#fdf7ff, #141218);
+    --md-sys-color-surface-container-lowest: light-dark(#ffffff, #0f0d13);
+    /* ... 59 total design tokens + 6 tonal palettes ... */
 }
 ```
 
 ---
 
-## API
+## Core API
 
-### `MaterialColor.Create()`
+### `createTheme(options)(sourceColor)`
 
-Generate a full set of Material Design 3 color tokens for light and dark schemes.
-
-```ts
-import { Hct, TonalPalette } from "@material/material-color-utilities"
-import { MaterialColor } from "@sandlada/mcu-helper"
-
-const theme = MaterialColor.Create({
-  sourceColor: Hct.fromInt(0xff6750a4),
-  contrast: 0,            // (optional) MaterialContrastLevel, default: 0
-  variant: "tonal_spot",  // (optional) MaterialVariant, default: TONAL_SPOT
-  platform: "phone",      // (optional) Platform, default: "phone"
-  specVersion: "2025",    // (optional) "2021" | "2025", default: "2025"
-  palettes: {},           // (optional) override specific tonal palettes
-  whiteList: [],          // (optional) only include these tokens
-  blackList: [],          // (optional) exclude these tokens
-})
-```
-
-**Returns** `Theme`:
-
-| Property      | Description                                                                        |
-| ------------- | ---------------------------------------------------------------------------------- |
-| `light`       | Light scheme colors with HCT, name, and kebab-case                                 |
-| `dark`        | Dark scheme colors with HCT, name, and kebab-case                                  |
-| `lightObject` | Light scheme colors as `{ "token-name": ARGB }`                                    |
-| `darkObject`  | Dark scheme colors as `{ "token-name": ARGB }`                                     |
-| `palettes`    | Six tonal palettes (primary, secondary, tertiary, error, neutral, neutral-variant) |
-
-#### Whitelist / Blacklist
-
-Filter which tokens to include:
+Higher-order pure functional theme generator.
 
 ```ts
-const theme = MaterialColor.Create({
-  sourceColor: Hct.fromInt(0xff6750a4),
-  whiteList: ["primary", "on-primary", "primary-container"],
-  // — or —
-  blackList: ["surface-container-low", "surface-container-high"],
-})
-```
+import { createTheme, MaterialVariant, MaterialContrastLevel } from "@sandlada/mcu-helper"
 
-> `whiteList` and `blackList` are **mutually exclusive** — passing both throws an error.
-
----
-
-### `MaterialColor` — Type Exports
-
-The library also exports the type union of all available color token names:
-
-```ts
-import type { MaterialColorKebabCaseName } from "@sandlada/mcu-helper"
-
-// e.g. "primary" | "on-primary" | "primary-container" | ... (60+ tokens)
-```
-
----
-
-### `MaterialPalette.Create()`
-
-Generate tone–color pairs from a tonal palette.
-
-```ts
-import { Hct } from "@material/material-color-utilities"
-import { MaterialColor, MaterialPalette } from "@sandlada/mcu-helper"
-
-const theme = MaterialColor.Create({ sourceColor: Hct.fromInt(0xff6750a4) })
-
-// All 101 tones (0–100)
-const allTones = MaterialPalette.Create({
-  palette: theme.palettes.primaryPalette,
-})
-
-// Specific tones
-const specificTones = MaterialPalette.Create({
-  palette: theme.palettes.secondaryPalette,
-  tones: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-})
-```
-
-**Returns**: `{ tone: number, color: number }[]`
-
----
-
-### `Serialization.ToCSS()`
-
-Serialize theme colors and tonal palettes into CSS custom properties.
-
-```ts
-import { Serialization } from "@sandlada/mcu-helper"
-
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-  includeTheme: true,             // (optional) include theme tokens, default: true
-  palettes: theme.palettes,       // (optional) include tonal palette tokens
-  paletteWhiteList: [{ family: "primary", tone: 40 }],  // (optional) filter palette entries
-  paletteBlackList: [],           // (optional) exclude palette entries
-  paletteTones: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], // (optional) palette tones
-  varPrefix: "md-sys-color",     // (optional) custom CSS variable prefix, default: "md-sys-color"
-  customPaletteName: "my-brand", // (optional) emit palette with a custom name
-  isCustomPalette: false,        // (optional) use custom palette prefix format
-})
-```
-
-Theme tokens use `light-dark()` so they work in both light and dark mode automatically.
-
-#### Palette CSS output
-
-```ts
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-  palettes: theme.palettes,
-  paletteTones: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-})
-```
-
-Produces:
-
-```css
-:root {
-    --md-sys-color-background: light-dark(#f8fdff, #101416);
-    /* ... theme tokens ... */
-    --md-sys-ref-primary-0: #000000;
-    --md-sys-ref-primary-10: #21005e;
-    --md-sys-ref-primary-20: #381e72;
-    --md-sys-ref-primary-30: #4f378b;
-    --md-sys-ref-primary-40: #6750a4;
-    --md-sys-ref-primary-50: #7f67be;
-    /* ... more palette tones ... */
-}
-```
-
-#### Custom prefix example
-
-```ts
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-  varPrefix: "my-custom",
-})
-// → --my-custom-background: light-dark(...)
-```
-
-#### Custom palette example
-
-```ts
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-  palettes: theme.palettes,
-  customPaletteName: "brand-primary",
-  isCustomPalette: true,
-})
-// → --brand-primary-40: #6750a4;
-```
-
----
-
-### `MaterialVariant`
-
-The available Material Design variant options:
-
-```ts
-import { MaterialVariant } from "@sandlada/mcu-helper"
-
-// MaterialVariant.Monochrome
-// MaterialVariant.Neutral
-// MaterialVariant.TonalSpot   (default)
-// MaterialVariant.Vibrant
-// MaterialVariant.Expressive
-// MaterialVariant.Fidelity
-// MaterialVariant.Content
-// MaterialVariant.Rainbow
-// MaterialVariant.FruitSalad
-```
-
----
-
-### `MaterialContrastLevel`
-
-```ts
-import { MaterialContrastLevel } from "@sandlada/mcu-helper"
-
-// MaterialContrastLevel.Reduced  → -1.0
-// MaterialContrastLevel.Default  →  0   (default)
-// MaterialContrastLevel.Medium   →  0.5
-// MaterialContrastLevel.High     →  1.0
-```
-
----
-
-### `MaterialColors`
-
-A utility class that wraps `MaterialDynamicColors` from `@material/material-color-utilities`:
-
-```ts
-import { MaterialColors } from "@sandlada/mcu-helper"
-
-const allColorDefs = MaterialColors.ToRecord()
-// → { primary: DynamicColor, onPrimary: DynamicColor, ... }
-```
-
----
-
-### `StringUtil`
-
-String case conversion utilities:
-
-```ts
-import { StringUtil } from "@sandlada/mcu-helper"
-
-StringUtil.ToKebabCase("primaryContainer")   // → "primary-container"
-StringUtil.ToSnakeCase("primaryContainer")    // → "primary_container"
-StringUtil.ToPascalCase("primary-container")  // → "PrimaryContainer"
-```
-
----
-
-## Recipes
-
-### Generate and save CSS to a file
-
-```ts
-import { Hct } from "@material/material-color-utilities"
-import { MaterialColor, Serialization } from "@sandlada/mcu-helper"
-import { writeFileSync } from "node:fs"
-
-const sourceColor = Hct.fromInt(0xff6750a4)
-const theme = MaterialColor.Create({ sourceColor })
-
-const css = Serialization.ToCSS({
-  lightObject: theme.lightObject,
-  darkObject: theme.darkObject,
-  palettes: theme.palettes,
-  paletteTones: [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
-})
-
-writeFileSync("tokens.css", css, "utf-8")
-```
-
-### Include only specific tokens
-
-```ts
-const theme = MaterialColor.Create({
-  sourceColor: Hct.fromInt(0xff6750a4),
-  whiteList: [
-    "primary",
-    "on-primary",
-    "primary-container",
-    "on-primary-container",
-    "secondary",
-    "on-secondary",
-    "surface",
-    "on-surface",
-    "background",
-    "on-background",
-    "error",
-    "on-error",
+const themeGenerator = createTheme({
+  variant: MaterialVariant.Vibrant,             // default: MaterialVariant.TonalSpot
+  contrastLevel: MaterialContrastLevel.Default, // -1.0 to 1.0, default: 0
+  specVersion: "2025",                         // "2021" (55 tokens) | "2025" (59 tokens)
+  oled: true,                                  // OLED pitch-black dark mode optimization
+  platform: "phone",                           // "phone" | "watch"
+  customColors: [
+    { name: "brand-accent", value: "#FF5722", blend: true }
   ],
 })
+
+const theme = themeGenerator("#6750A4")
 ```
 
-### Use a custom variant with high contrast
+**Theme Structure (`MaterialThemeData`)**:
+
+| Property | Description |
+| --- | --- |
+| `light` | Token map of camelCase tokens to ARGB integers (e.g. `{ primary: 0xff6750a4, ... }`) |
+| `dark` | Token map of camelCase tokens to ARGB integers |
+| `palettes` | Six tonal palettes (`primaryPalette`, `secondaryPalette`, `tertiaryPalette`, `errorPalette`, `neutralPalette`, `neutralVariantPalette`) |
+| `customColors` | Evaluated custom color groups with light & dark role tokens |
+
+---
+
+### `createPaletteTones(options)(palette)`
+
+Higher-order tonal palette evaluator.
 
 ```ts
-const theme = MaterialColor.Create({
-  sourceColor: Hct.fromInt(0xff006b3e),
-  variant: MaterialVariant.Vibrant,
-  contrast: MaterialContrastLevel.High,
-})
+import { createPaletteTones, STANDARD_PALETTE_TONES } from "@sandlada/mcu-helper"
+
+// Evaluate standard 16 reference tones
+const getTones = createPaletteTones()
+const tones = getTones(theme.palettes.primaryPalette)
+// → Record<number, number> e.g. { 0: 0xff000000, 10: ..., 40: 0xff6750a4, ..., 100: 0xffffffff }
+
+// Custom tones
+const getCustomTones = createPaletteTones({ tones: [10, 20, 30, 40, 50, 60, 70, 80, 90] })
+const customTones = getCustomTones(theme.palettes.primaryPalette)
+```
+
+---
+
+### `toCSS(options)(themeData)`
+
+Modern CSS serializer supporting multiple color spaces, `light-dark()`, and customizable prefixes.
+
+```ts
+import { toCSS } from "@sandlada/mcu-helper"
+
+const css = toCSS({
+  format: "display-p3",           // "hex" | "rgb" | "display-p3" | "color-mix" | ((argb) => string)
+  varPrefix: "app-color",         // default: "md-sys-color"
+  paletteVarPrefix: "app-palette",// default: "md-ref-palette"
+  wrapLightDark: true,            // wrap theme tokens in light-dark()
+  includeTheme: true,             // emit theme tokens
+  includePalettes: true,          // emit reference palette tones
+  selector: ":root",              // CSS selector wrapper
+})(theme)
+```
+
+---
+
+### String Utilities
+
+Standalone pure functions:
+
+```ts
+import { toKebabCase, toSnakeCase, toPascalCase, toCamelCase } from "@sandlada/mcu-helper"
+
+toKebabCase("primaryContainer")        // "primary-container"
+toSnakeCase("primaryContainer")        // "primary_container"
+toPascalCase("primary-container")      // "PrimaryContainer"
+toCamelCase("primary-container")       // "primaryContainer"
+```
+
+---
+
+### Color Space Formatters
+
+```ts
+import { formatHex, formatRgb, formatDisplayP3, formatColorMix } from "@sandlada/mcu-helper"
+
+formatHex(0xff6750a4)                    // "#6750a4"
+formatRgb(0xff6750a4)                    // "rgb(103 80 164)"
+formatDisplayP3(0xff6750a4)              // "color(display-p3 0.386884 0.315024 0.634125)"
+formatColorMix(0xff6750a4, "display-p3") // "color-mix(in display-p3, ...)"
 ```
 
 ---
@@ -352,10 +168,7 @@ npm install
 # Run tests
 npm test
 
-# Watch mode
-npm run test:watch
-
-# Build
+# Build package
 npm run compile
 ```
 

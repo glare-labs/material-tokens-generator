@@ -1,27 +1,28 @@
 {
     "name": "@sandlada/mcu-helper",
-    "version": "0.0.1-20260719.a",
+    "version": "0.1.0-20260830.a",
     "author": "Kai-Orion & Sandlada",
     "license": "MIT",
     "type": "module",
-    "description": "Generate Material Design 3 color tokens, palettes, and CSS custom properties from a source color using @material/material-color-utilities.",
+    "description": "High-performance pure functional engine for Material Design 3 (Material You) color tokens, dynamic schemes, Display P3 / color-mix CSS custom properties, and OLED dark themes.",
     "keywords": [
-        "color",
-        "theme-generator",
-        "material",
-        "material-design",
+        "material-design-3",
         "material-you",
-        "material-tokens",
-        "tokens",
-        "design-tokens",
-        "css",
-        "css-custom-properties",
-        "custom-properties",
-        "color-tokens",
-        "color-palette",
-        "dynamic-color",
+        "md3",
         "material-color-utilities",
-        "mcu"
+        "mcu",
+        "design-tokens",
+        "color-tokens",
+        "theme-generator",
+        "dynamic-color",
+        "color-palette",
+        "tonal-palette",
+        "css-custom-properties",
+        "css-variables",
+        "display-p3",
+        "color-mix",
+        "oled-dark-mode",
+        "tree-shakable"
     ],
     "homepage": "https://github.com/sandlada/mcu-helper#readme",
     "repository": {
@@ -36,26 +37,73 @@
     },
     "main": "build/index.js",
     "module": "build/index.js",
+    "types": "build/index.d.ts",
+    "sideEffects": false,
     "files": [
-        "build/**/*",
-        "README.md"
+        "build",
+        "README.md",
+        "LICENSE"
     ],
     "exports": {
         ".": {
             "types": "./build/index.d.ts",
             "import": "./build/index.js",
-            "require": "./build/index.js",
             "default": "./build/index.js"
         },
-        "./*": {
-            "types": "./build/*.d.ts",
-            "import": "./build/*.js",
-            "require": "./build/*.js",
-            "default": "./build/*.js"
-        }
+        "./core": {
+            "types": "./build/core/index.d.ts",
+            "import": "./build/core/index.js",
+            "default": "./build/core/index.js"
+        },
+        "./core/*": {
+            "types": "./build/core/*.d.ts",
+            "import": "./build/core/*.js",
+            "default": "./build/core/*.js"
+        },
+        "./formatters": {
+            "types": "./build/formatters/index.d.ts",
+            "import": "./build/formatters/index.js",
+            "default": "./build/formatters/index.js"
+        },
+        "./formatters/*": {
+            "types": "./build/formatters/*.d.ts",
+            "import": "./build/formatters/*.js",
+            "default": "./build/formatters/*.js"
+        },
+        "./serializers": {
+            "types": "./build/serializers/index.d.ts",
+            "import": "./build/serializers/index.js",
+            "default": "./build/serializers/index.js"
+        },
+        "./serializers/*": {
+            "types": "./build/serializers/*.d.ts",
+            "import": "./build/serializers/*.js",
+            "default": "./build/serializers/*.js"
+        },
+        "./types": {
+            "types": "./build/types/index.d.ts",
+            "import": "./build/types/index.js",
+            "default": "./build/types/index.js"
+        },
+        "./types/*": {
+            "types": "./build/types/*.d.ts",
+            "import": "./build/types/*.js",
+            "default": "./build/types/*.js"
+        },
+        "./utils": {
+            "types": "./build/utils/index.d.ts",
+            "import": "./build/utils/index.js",
+            "default": "./build/utils/index.js"
+        },
+        "./utils/*": {
+            "types": "./build/utils/*.d.ts",
+            "import": "./build/utils/*.js",
+            "default": "./build/utils/*.js"
+        },
+        "./package.json": "./package.json"
     },
     "engines": {
-        "node": ">=18"
+        "node": ">=22"
     },
     "scripts": {
         "compile": "rolldown --config rolldown.config.mjs && tsc --emitDeclarationOnly",
@@ -64,10 +112,10 @@
     },
     "devDependencies": {
         "@material/material-color-utilities": "^0.4.0",
-        "@types/node": "26.1.1",
-        "rolldown": "^1.2.0",
+        "@types/node": "26.4.0",
+        "rolldown": "^1.2.6",
         "typescript": "~7.0.2",
-        "vitest": "^4.1.10"
+        "vitest": "^4.1.11"
     },
     "peerDependencies": {
         "@material/material-color-utilities": "^0.4.0"
