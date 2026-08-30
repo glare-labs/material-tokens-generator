@@ -1,4 +1,4 @@
-import { type DynamicColor, DynamicScheme, Hct, MaterialDynamicColors, TonalPalette } from '@material/material-color-utilities'
+import { DynamicScheme, Hct, TonalPalette } from '@material/material-color-utilities'
 import { MaterialContrastLevel, MaterialVariant, type DynamicColorTokenDescriptor, type MaterialDynamicColorToken } from '../types/material.types'
 import type { CreateThemeOptions } from '../types/theme.types'
 import { parseSourceColor } from '../utils/color'
