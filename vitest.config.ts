@@ -2,7 +2,8 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
     test: {
-        include: ['src/**/*.test.ts'],
+        include: ['src/**/*.spec.ts', 'tests/**/*.spec.ts'],
+        testTimeout: 60000,
         server: {
             deps: {
                 inline: ['@material/material-color-utilities'],
